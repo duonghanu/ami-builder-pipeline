@@ -1,0 +1,14 @@
+# Standards: 0.11
+---
+
+- hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    ansible_ec2_placement_region: us-east-1    
+    logs:
+      - file: /var/log/messages
+        group_name: "system_logs"  
+
+  roles:
+  - aws-cloudwatch-logs-agent

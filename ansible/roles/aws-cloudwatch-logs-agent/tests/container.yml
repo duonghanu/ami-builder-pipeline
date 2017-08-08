@@ -1,0 +1,72 @@
+# Standards: 0.11
+---
+
+- hosts: localhost
+  connection: local
+
+  vars:
+    test_ansible_version: "2.2"
+    sanitised_test_ansible_version: "{{ test_ansible_version | regex_replace('\\.','_')}}"
+    docker_image_name: "aws-cloudwatch-logs-agent-{{ sanitised_test_ansible_version }}"
+    docker_container_name: "aws-cloudwatch-logs-agent-{{ sanitised_test_ansible_version }}"
+
+  tasks:
+
+  - block:
+    - name: Create temp directory
+      file:
+        path: "{{ playbook_dir }}/tmp"
+        state: directory
+
+    - name: Create Dockerfile
+      template:
+        src: "{{ playbook_dir }}/templates/Dockerfile.j2"
+        dest: "{{ playbook_dir }}/tmp/Dockerfile"
+
+    - name: Create roles directory
+      file:
+        path: "{{ playbook_dir }}/roles"
+        state: directory
+
+    - name: Add aws-cloudwatch-logs-agent role to roles folder
+      copy:
+        src: "/home/nguyenduong/programming/ami_builder/ami_builder_pipeline/ansible/roles/aws-cloudwatch-logs-agent"
+        dest: "{{playbook_dir}}/roles/"
+
+    - name: Build docker image
+      docker_image:
+        name: "{{ docker_image_name }}"
+        state: present
+        path: .
+        dockerfile: "{{ playbook_dir }}/tmp/Dockerfile"
+        force: yes
+
+    - name: Test playbook within docker container
+      docker_container:
+        command: "/sbin/my_init -- ansible-playbook -i inventory playbook.yml"
+        detach: false
+        image: "{{ docker_image_name }}"
+        name: "{{ docker_container_name }}"
+        privileged: yes
+        state: started
+    
+    always:
+      - name: Cleanup docker container
+        docker_container:
+          name: "{{ docker_container_name }}"
+          state: absent
+
+      - name: Cleanup docker images
+        docker_image:
+          name: "{{ docker_image_name }}"
+          state: absent          
+
+      - name: Cleanup roles directory
+        file:
+          path: "{{ playbook_dir }}/roles"
+          state: absent
+
+      - name: Cleanup temp directory
+        file:
+          path: "{{ playbook_dir }}/tmp"
+          state: absent

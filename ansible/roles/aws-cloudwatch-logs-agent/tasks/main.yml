@@ -1,0 +1,37 @@
+---
+
+- name: "Install RedHat/AMZN Linux CloudWatch Log Agent"
+  include: "RedHat.yml"
+  when: ansible_os_family == "RedHat"
+
+- block:
+  - name: "Download Debian/Ubuntu CloudWatch Log Agent Install Script"
+    include: "Debian.yml"
+
+  - name: "Configure CloudWatch Log Agent"
+    include: "conf.yml"
+
+  - name: "Install Debian/Ubuntu CloudWatch Log Agent"
+    include: "DebianInstall.yml"
+  when: ansible_os_family == "Debian"
+
+- name: "Determine region of the instance"
+  shell: curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -e '{ print $3 }' | sed 's/"//g'
+  register: aws_region_cmd
+
+- set_fact:
+    aws_region: "{{ aws_region_cmd.stdout }}"
+
+- name: "Set region for CloudWatch Endpoint"
+  template: 
+    src: etc/aws.conf.j2
+    dest: /var/awslogs/etc/aws.conf
+    owner: root
+    group: root
+    mode: 0600
+
+- name: "Restart awslogs service"
+  service:
+    name: awslogs
+    state: restarted
+    enabled: yes

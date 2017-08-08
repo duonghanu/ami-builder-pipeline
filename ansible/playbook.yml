@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: true
+  become: yes
+  vars:
+    # CloudWatch Logs Role configuration
+    logs:
+      - file: /var/log/messages
+        group_name: "system_logs"
+  roles:
+    - common
+    - aws-cloudwatch-logs-agent

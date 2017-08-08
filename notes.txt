@@ -1,0 +1,16 @@
+1. Validate packer json file
+
+$packer validate packer_cis.json
+
+nguyenduong@:AMI-Builder-Pipeline_repo$ packer validate packer_cis.json 
+Template validation failed. Errors are shown below.
+
+Errors validating build 'AWS AMI Builders - CIS'. 1 error(s) occurred:
+
+* playbook_file: ansible/playbook.yaml is invalid: stat ansible/playbook.yaml: no such file or directory
+
+
+nguyenduong@:AMI-Builder-Pipeline_repo$ packer validate packer_cis.json 
+Template validated successfully.
+
+2. 
